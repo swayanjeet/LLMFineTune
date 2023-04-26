@@ -7,8 +7,6 @@ by Databricks employees in capability domains from the InstructGPT paper, includ
 information extraction, open QA and summarization. `dolly-v2-12b` is not a state-of-the-art model, but does exhibit surprisingly
 high quality instruction following behavior not characteristic of the foundation model on which it is based.
 
-Databricks is committed to ensuring that every organization and individual benefits from the transformative power of artificial intelligence. The Dolly model family represents our first steps along this journey, and we’re excited to share this technology with the world.
-
 The model is available on Hugging Face as [databricks/dolly-v2-12b](https://huggingface.co/databricks/dolly-v2-12b).
 
 ## Model Overview
@@ -44,10 +42,15 @@ personally identifying information about non-public figures, but it may contain 
 The dataset may also reflect biases found in Wikipedia. Finally, the dataset likely reflects
 the interests and semantic choices of Databricks employees, a demographic which is not representative of the global population at large.
 
-This is an adaptation of the Dolly Model present over here (https://github.com/databrickslabs/dolly).
+This is an adaptation of the Dolly Model present over here (https://github.com/databrickslabs/dolly) and this will run without the Databricks Cluster
 
 ## Getting Started with Training
 
-- Add the `dolly` repo to Databricks (under Repos click Add Repo, enter `https://github.com/databrickslabs/dolly.git`, then click Create Repo).
-- Start a `12.2 LTS ML (includes Apache Spark 3.3.2, GPU, Scala 2.12)` single-node cluster with node type having 8 A100 GPUs (e.g. `Standard_ND96asr_v4` or `p4d.24xlarge`). Note that these instance types may not be available in all regions, or may be difficult to provision. In Databricks, note that you must select the GPU runtime first, and unselect "Use Photon", for these instance types to appear (where supported).
-- Open the `train_dolly` notebook in the Repo (which is the `train_dolly.py` file in the Github `dolly` repo), attach to your GPU cluster, and run all cells.  When training finishes, the notebook will save the model under `/dbfs/dolly_training`.
+- Clone the repo
+- Start a machine in Google Cloud having 8 A100 40 GB GPUs.
+- Run the below mentioned commands from the root directory of this project.
+  - pip install -r requirements.txt
+  - python cache_dataset.py
+  - deepspeed --num_gpus=8 --module training.trainer --input-model "EleutherAI/pythia-6.9b"  --deepspeed "./config/ds_z3_bf16_config.json" --epochs 2 --local-output-dir "./training_data/dolly__EXP01__2023-04-25T12:35:39" --dbfs-output-dir "./output/dolly__EXP01__2023-04-25T12:35:39" --per-device-train-batch-size 6 --per-device-eval-batch-size 6 --logging-steps 10 --save-steps 200 --save-total-limit 20 --eval-steps 50 --warmup-steps 50 --test-size 200 --lr 5e-6
+  - python inference.py "./output/dolly__EXP01__2023-04-25T12:35:39"
+  - Enjoy the predictions
